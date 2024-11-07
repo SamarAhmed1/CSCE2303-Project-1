@@ -5,6 +5,9 @@
 #include <string>
 #include <utility>
 #include <cmath>
+#include <fstream>
+#include <sstream>
+#include <vector>
 using namespace std;
 
 struct RFormat {
@@ -23,6 +26,13 @@ struct UFormat {
     pair <string, int> rd;
     int imm;
 };
+string RInstructions[10] = { "ADD", "SUB", "SLL", "SLT", "SLTU", "XOR", "SRL", "SRA", "OR", "AND" };
+vector <int> registers(32, 0);
+
+int extractRegisterNumber(const string& regName) {
+    string numStr = regName.substr(1); // Extract the numeric part after 'x'
+    return stoi(numStr); // Convert the numeric part to an integer
+}
 
 void processRFormat(RFormat& instruction) {
     if (instruction.name == "ADD") {
@@ -72,6 +82,9 @@ void processRFormat(RFormat& instruction) {
     else if (instruction.name == "AND") {
         instruction.rd.second = instruction.rs1.second & instruction.rs2.second;
     }
+
+    int registerNumber = extractRegisterNumber(instruction.rd.first);
+    registers[registerNumber] = instruction.rd.second;
 }
 
 void processUFormat(UFormat& instruction) {
@@ -84,9 +97,57 @@ void processUFormat(UFormat& instruction) {
     }
 }
 
+void readRFormat(const string& line) {
+    RFormat R;
+    istringstream iss(line);
+    string instructionName, rd, rs1, rs2;
+    char comma;
+
+    iss >> instructionName >> rd >> comma >> rs1 >> comma >> rs2;
+
+    if (iss.fail()) {
+        cout << "Error parsing the instruction: " << line << endl;
+        return;
+    }
+
+    R.name = instructionName;
+    R.rd.first = rd;
+    R.rs1.first = rs1;
+    R.rs2.first = rs2;
+    processRFormat(R);
+}
+
+void readAndProcessAssemblyFile(const string& filename) {
+    ifstream file(filename);
+
+    if (!file.is_open()) {
+        std::cerr << "Error opening file: " << filename << std::endl;
+        return;
+    }
+
+    string line;
+    while (getline(file, line)) {
+        istringstream iss(line);
+        string firstWord;
+
+        if (iss >> firstWord) {
+            for (int i = 0; i < 10; i++) {
+                if (firstWord == RInstructions[i]) {
+                    readRFormat(line);
+                }
+            }
+        }
+    }
+
+    file.close();
+}
+
 int main()
 {
-    std::cout << "Hello World!\n";
+    readAndProcessAssemblyFile("Rinstruction.txt");
+
+
+   
 }
 
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu
