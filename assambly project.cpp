@@ -45,9 +45,10 @@ int extractRegisterNumber(const string& regName)
 } 
 
 // so Jformat have only one instruction which is JAL:: its basicaly stores the address ( +4) of the instruction into rd and then update the imm 
-void ProcessJformat(Jformat& instruction, int& valu)
+void ProcessJformat(Jformat& instruction)
 
-{
+{ 
+int &valu ; 
     if (instruction.name = "JAL")
     {
         instruction.rd.second = valu + 4;
