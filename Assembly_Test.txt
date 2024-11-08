@@ -1,0 +1,10 @@
+_start:
+ADD t0, x0, x2
+ADD t1, x0, x3
+loop:
+BEQ t0, t1, end
+ADD t0, t0, x1
+SW t2, 4(x3)
+BEQ x0, x0, loop
+end:
+NOP
