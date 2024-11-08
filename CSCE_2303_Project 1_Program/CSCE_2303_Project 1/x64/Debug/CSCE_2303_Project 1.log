@@ -1,0 +1,41 @@
+﻿  CSCE_2303_Project 1.cpp
+C:\Users\samar\source\repos\CSCE_2303_Project 1\CSCE_2303_Project 1\Memory.h(13,45): warning C4307: '*': signed integral constant overflow
+C:\Users\samar\source\repos\CSCE_2303_Project 1\CSCE_2303_Project 1\CSCE_2303_Project 1.cpp(106,50): warning C4244: '=': conversion from 'double' to '_Ty2', possible loss of data
+          with
+          [
+              _Ty2=int
+          ]
+C:\Users\samar\source\repos\CSCE_2303_Project 1\CSCE_2303_Project 1\CSCE_2303_Project 1.cpp(130,50): warning C4244: '=': conversion from 'double' to '_Ty2', possible loss of data
+          with
+          [
+              _Ty2=int
+          ]
+C:\Users\samar\source\repos\CSCE_2303_Project 1\CSCE_2303_Project 1\CSCE_2303_Project 1.cpp(134,50): warning C4244: '=': conversion from 'double' to '_Ty2', possible loss of data
+          with
+          [
+              _Ty2=int
+          ]
+C:\Users\samar\source\repos\CSCE_2303_Project 1\CSCE_2303_Project 1\CSCE_2303_Project 1.cpp(152,43): warning C4244: '=': conversion from 'double' to '_Ty2', possible loss of data
+          with
+          [
+              _Ty2=int
+          ]
+C:\Users\samar\source\repos\CSCE_2303_Project 1\CSCE_2303_Project 1\CSCE_2303_Project 1.cpp(303,50): warning C4244: '=': conversion from 'double' to '_Ty2', possible loss of data
+          with
+          [
+              _Ty2=int
+          ]
+C:\Users\samar\source\repos\CSCE_2303_Project 1\CSCE_2303_Project 1\CSCE_2303_Project 1.cpp(310,50): warning C4244: '=': conversion from 'double' to '_Ty2', possible loss of data
+          with
+          [
+              _Ty2=int
+          ]
+C:\Users\samar\source\repos\CSCE_2303_Project 1\CSCE_2303_Project 1\CSCE_2303_Project 1.cpp(313,50): warning C4244: '=': conversion from 'double' to '_Ty2', possible loss of data
+          with
+          [
+              _Ty2=int
+          ]
+C:\Users\samar\source\repos\CSCE_2303_Project 1\CSCE_2303_Project 1\CSCE_2303_Project 1.cpp(400,7): warning C4101: 'comma': unreferenced local variable
+C:\Users\samar\source\repos\CSCE_2303_Project 1\CSCE_2303_Project 1\CSCE_2303_Project 1.cpp(400,27): warning C4101: 'bracketClosed': unreferenced local variable
+C:\Users\samar\source\repos\CSCE_2303_Project 1\CSCE_2303_Project 1\CSCE_2303_Project 1.cpp(400,14): warning C4101: 'bracketOpen': unreferenced local variable
+  CSCE_2303_Project 1.vcxproj -> C:\Users\samar\source\repos\CSCE_2303_Project 1\x64\Debug\CSCE_2303_Project 1.exe
