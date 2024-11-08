@@ -541,5 +541,33 @@ void readAndProcessAssemblyFile(const string& filename) {
 int main()
 {
 	readAndProcessAssemblyFile("Assembly_Test.txt");
+ //string memomry; //to be confrimed later 
+
+ string RegisterN; 
+ 
+ int RegisterValue;
+ 
+ string name;
+ 
+ cout << "Please enter your Name";
+ 
+ cin >> name; 
+ 
+ cout << "Hello" << name << "  " << "Welcome to Risk - V Assambler" ;
+ 
+ cout << "Please, enter the number of registers that you need to initialize :";
+ 
+ int num;
+ 
+ cin >> num;
+
+ for (int i = 0; i < num; i++)
+ {
+     cout << "Enter the desired names for the registers";
+     cin >> RegisterN;
+     cout << "Enter the value for" << RegisterN << ":" ;
+     cin >> RegisterValue;
+     extractRegisterNumber[RegisterN] = RegisterValue; // here i called the function that we used in the beginning to store registers 
+ } 
 	return 0;
 }
