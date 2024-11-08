@@ -8,14 +8,17 @@
 #include <fstream>
 #include <sstream>
 #include <map>
+#include <utility>
 using namespace std;
 
 //vector<string> labels;
 map<string, int> labels;
 map<int, int> memory;
 vector <string> RInstructions = { "ADD", "SUB", "SLL", "SLT", "SLTU", "XOR", "SRL", "SRA", "OR", "AND" };
-vector <string> BInstructions = { "BEQ", "BNE", "BLT", "BGE", "BLTU", "BLGU"};
+vector <string> BInstructions = { "BEQ", "BNE", "BLT", "BGE", "BLTU", "BLGEU"};
 vector <string> SInstructions = { "SW", "SH", "SB"};
+vector <string> IInstructions = { "LB", "LH", "LW", "LBU", "LHU", "ADDI", "SLTI", "SLTU", "XORI", "ORI","ANDI" };
+vector <string> JInstructions = { "JAL" };
 vector <int> registers(32, 0);
 
 struct SFormat {
@@ -48,10 +51,40 @@ struct UFormat {
 	int imm;
 };
 
+struct Jformat
+{
+	string name;
+	int opcode[7];
+	pair <string, int> rd;
+	int imm;
+};
+
+struct Iformat
+{
+	string name;
+	//int opcode[7];
+	int imm;
+	pair <string, int> rs1;
+	pair <string, int> rd;
+};
+
+
 int extractRegisterNumber(const string& regName) {
 	string numStr = regName.substr(1); // Extract the numeric part after 'x'
 	return stoi(numStr); // Convert the numeric part to an integer
 }
+
+void ProcessJformat(Jformat& instruction, int& valu) {
+	if (instruction.name == "JAL") {
+		instruction.rd.second = valu + 4;
+		valu = valu + instruction.imm;
+		cout << "JALR:" << instruction.rd.second << "   " << valu << endl;
+	}
+
+	int registerNumber = extractRegisterNumber(instruction.rd.first);
+	registers[registerNumber] = instruction.rd.second;
+}
+
 
 void processRFormat(RFormat& instruction) {
 	if (instruction.name == "ADD") {
@@ -176,6 +209,109 @@ void ProcessSFormat(SFormat& value) {
 	else {
 		cout << "Unknown S-format opcode: " << value.opcode << endl;
 	}
+}
+
+void ProcessIformat(Iformat& instruction) {
+	int address = 0;
+	if (instruction.name == "LB") {
+		address = instruction.rs1.second + instruction.imm;
+		instruction.rd.second = static_cast<int8_t>(memory[address]);
+		cout << "LB:" << instruction.rs1.second + instruction.imm << " = " << instruction.rd.second << endl;
+	}
+	else if (instruction.name == "LH") {
+		address = instruction.rs1.second + instruction.imm;
+		instruction.rd.second = static_cast<int16_t>(memory[address]);
+		cout << "LH " << instruction.rs1.second + instruction.imm << " = " << instruction.rd.second << endl;
+	}
+	else if (instruction.name == "LW") {
+		address = instruction.rs1.second + instruction.imm;
+		instruction.rd.second = memory[address];
+		cout << "LW:" << instruction.rs1.second + instruction.imm << " = " << instruction.rd.second << endl;
+	}
+	else if (instruction.name == "LBU") {
+		address = instruction.rs1.second + instruction.imm;
+		instruction.rd.second = memory[address] & 0xFF;
+		cout << "LBU: " << instruction.rs1.second + instruction.imm << " = " << instruction.rd.second << endl;
+	}
+	else if (instruction.name == "LHU") {
+		address = instruction.rs1.second + instruction.imm;
+		instruction.rd.second = memory[address] & 0xFFFF;
+		cout << "LHU: " << instruction.rs1.second + instruction.imm << " = " << instruction.rd.second << endl;
+	}
+	else if (instruction.name == "ADDI") {
+		instruction.rd.second = instruction.rs1.second + instruction.imm;
+		cout << "ADDI: " << instruction.rs1.second << " + " << instruction.imm << " = " << instruction.rd.second << endl;
+	}
+	else if (instruction.name == "SLTI") {
+		instruction.rd.second = instruction.rs1.second < instruction.imm ? 1 : 0;
+		cout << "SLTI: " << instruction.rs1.second << " < " << instruction.imm << " = " << instruction.rd.second << endl;
+	}
+	else if (instruction.name == "SLTU") {
+		instruction.rd.second = static_cast<unsigned int>(instruction.rs1.second) < static_cast<unsigned int>(instruction.imm) ? 1 : 0;
+		cout << "SLTIU: " << instruction.rs1.second << " < " << instruction.imm << " = " << instruction.rd.second << endl;
+	}
+	else if (instruction.name == "XORI") {
+		instruction.rd.second = instruction.rs1.second ^ instruction.imm;
+		cout << "XORI: " << instruction.rs1.second << " ^ " << instruction.imm << " = " << instruction.rd.second << endl;
+	}
+	else if (instruction.name == "ORI") {
+		instruction.rd.second = instruction.rs1.second | instruction.imm;
+		cout << "ORI: " << instruction.rs1.second << " | " << instruction.imm << " = " << instruction.rd.second << endl;
+	}
+	else if (instruction.name == "ANDI") {
+		instruction.rd.second = instruction.rs1.second & instruction.imm;
+		cout << "ANDI: " << instruction.rs1.second << " & " << instruction.imm << " = " << instruction.rd.second << endl;
+	}
+	else {
+		cout << "Unknown I-format opcode: " << instruction.name << endl;
+	}
+
+}
+
+void readIformat(const string& line)
+{
+	Iformat I;
+	istringstream iss(line);
+	string instructionName, rd, rs1;
+	char comma;
+	int imm;
+
+	iss >> instructionName >> rd >> comma >> rs1 >> comma >> imm;
+
+	if (iss.fail())
+	{
+		cout << "Error parsing the instruction: " << line << endl;
+		return;
+	}
+
+	I.name = instructionName;
+	I.rd.first = rd;
+	I.rs1.first = rs1;
+	I.imm = imm;
+	ProcessIformat(I);
+}
+
+void readJFormat(const string& line)
+{
+	Jformat J;
+	istringstream iss(line);
+	string instructionName, rd;
+	char comma;
+	int imm;
+
+	iss >> instructionName >> rd >> comma >> imm;
+
+	if (iss.fail())
+	{
+		cout << "Error parsing the instruction: " << line << endl;
+		return;
+	}
+
+	J.name = instructionName;
+	J.rd.first = rd;
+	J.imm = imm;
+
+	ProcessJformat(J);
 }
 
 void readRFormat(const string& line) {
@@ -317,6 +453,35 @@ void readAndProcessAssemblyFile(const string& filename) {
 				continue;
 			}
 
+			for (int i = 0; i < IInstructions.size(); i++)
+			{
+				if (firstWord == IInstructions[i])
+				{
+					readIformat(line);
+					instructionProcessed = true;
+					break;
+
+				}
+			}
+			if (instructionProcessed) {
+				counter++;
+				continue;
+			}
+			// JFORMAT ;
+			for (int i = 0; i < JInstructions.size(); i++)
+			{
+				if (firstWord == JInstructions[i])
+				{
+					readJFormat(line);
+					instructionProcessed = true;
+					break;
+				}
+			}
+
+			if (instructionProcessed) {
+				counter++;
+				continue;
+			}
 			// Check for S-type instructions
 			for (int i = 0; i < SInstructions.size(); i++) {
 				if (firstWord == SInstructions[i]) {
