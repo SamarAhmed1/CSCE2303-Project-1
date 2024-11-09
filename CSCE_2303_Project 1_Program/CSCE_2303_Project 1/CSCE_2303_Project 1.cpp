@@ -319,51 +319,62 @@ void ProcessIformat(Iformat& instruction, Memory&memory) {
 	registers[registerNumber] = instruction.rd.second;
 }
 
-void readIformat(const string& line, Memory &memory)
+void readIformat(const string& line)
 {
-	Iformat I;
-	istringstream iss(line);
-	string instructionName, rd, rs1;
-	char comma;
-	int imm;
+    Iformat I; 
+    stringstream ss(line);
+    string instructionName, rd, rs1,imm;
 
-	iss >> instructionName >> rd >> comma >> rs1 >> comma >> imm;
 
-	if (iss.fail())
-	{
-		cout << "Error parsing the instruction: " << line << endl;
-		return;
-	}
+    getline(ss, instructionName, ' ');
+    getline(ss, rd, ',');
+    getline(ss, rs1, ',');
+    getline(ss, imm, ' ');
 
-	I.name = instructionName;
-	I.rd.first = rd;
-	I.rs1.first = rs1;
-	I.rs1.second = registers[extractRegisterNumber(rs1)];
-	I.imm = imm;
-	ProcessIformat(I, memory);
+    //removes commas : 
+    if (!rd.empty() && rd.back() == ',')
+    {
+        rd = rd.substr(0, rd.size() - 1);
+    }
+    if (!rs1.empty() && rs1.back() == ',') 
+    {
+        rs1 = rs1.substr(0, rs1.size() - 1);
+    }
+
+
+
+    int immm = stoi(imm);
+    I.name = instructionName;
+    I.rd.first = rd; 
+    I.rd.second = registers[extractRegisterNumber(rd)];
+    I.rs1.first = rs1; 
+    I.rs1.second= registers[extractRegisterNumber(rs1)];
+    I.imm = imm;     
+    processIFormat(I);
 }
 
 void readJFormat(const string& line)
 {
-	Jformat J;
-	istringstream iss(line);
-	string instructionName, rd;
-	char comma;
-	int imm;
+    JFormat J;
+    stringstream ss(line);
+    string instructionName, rd,imm1;
+   
+    getline(ss, instructionName, ' ');
+    getline(ss, rd, ',');
+    getline(ss, imm1, ' ');
+   
+    if (!imm1.empty() && imm1.back() == ':') 
+    {
+        imm1 = imm1.substr(0, imm1.size() - 1);
+    }
 
-	iss >> instructionName >> rd >> comma >> imm;
 
-	if (iss.fail())
-	{
-		cout << "Error parsing the instruction: " << line << endl;
-		return;
-	}
+    J.name = instructionName;
+    J.rd.first = rd;  
+    J.rd.second = registers[extractRegisterNumber(rd)]
+    J.imm = stoi(imm1);      
 
-	J.name = instructionName;
-	J.rd.first = rd;
-	J.imm = imm;
-
-	ProcessJformat(J);
+    processJFormat(J);
 }
 
 void readRFormat(const string& line) {
