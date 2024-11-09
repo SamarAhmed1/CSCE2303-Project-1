@@ -620,7 +620,7 @@ int main()
 	string name;
         cout << "Please enter your Name;";
         cin >> name;
-        cout << "Hello" << name << "        " << "Welcome to Risk - V Assambler"<<endl;
+        cout << "Hello" << "  " << name << "        " << "Welcome to Risk - V Assambler"<<endl;
 	cout << "Enter the number of registers you wish to initialize" << endl;
 	cin >> num;
 	for (int i = 0; i < num; i++) {
