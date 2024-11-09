@@ -618,7 +618,7 @@ int main()
 	int RegisterValue;
 	int num;
 	string name;
-        cout << "Please enter your Name;"
+        cout << "Please enter your Name;";
         cin >> name;
         cout << "Hello" << name << "  " << "Welcome to Risk - V Assambler";
 	cout << "Enter the number of registers you wish to initialize" << endl;
