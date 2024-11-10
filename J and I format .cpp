@@ -304,7 +304,8 @@ string RegisterN;
 		cin >> RegisterValue;
 		registers[extractRegisterNumber(RegisterN)] = RegisterValue;
 	}
-	readAndProcessAssemblyFile("Assembly_Test.txt");
+	readAndProcessAssemblyFile("TestingJformat.txt");
+	//readAndProcessAssemblyFile("TestingIformat.txt");
 	for (int i = 0; i < registers.size(); i++) {
 		cout << "x" << i << " = " << registers[i] << endl;
 	}
