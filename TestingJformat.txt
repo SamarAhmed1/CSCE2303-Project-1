@@ -1,0 +1,8 @@
+_start:
+JAL x1, label
+NOP
+label:
+JAL x2, end
+NOP
+end:
+NOP
