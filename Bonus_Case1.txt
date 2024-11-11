@@ -1,0 +1,5 @@
+ADD x1, x1, x2
+ADDI x1, x0, 100
+ADD x2, x1, x1
+SUB x3, x2, x1
+SLT x4, x1, x3

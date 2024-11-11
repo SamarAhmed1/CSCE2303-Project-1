@@ -1,0 +1,5 @@
+ADD x5, x3, x2
+ADDI x5, x0, 42
+SW x5, 8(x0)
+LW x6, 8(x0)
+LBU x7, 8(x0)   

@@ -1,0 +1,6 @@
+ADDI x8, x0, 10
+ADDI x9, x0, 20
+BEQ x8, x8, Label1
+ADDI x8, x0, 0
+Label1:
+ADDI x10, x0, 5
