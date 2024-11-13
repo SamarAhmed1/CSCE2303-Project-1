@@ -13,6 +13,8 @@ private:
     long long Capacity;
 public:
     Memory();
+    string DecToBinary(int Dec) const; 
+    string DecToHex(int Dec) const;
     // Function to store a value at a specific address
     void store(int address, int value);
     // Function to load a value from a specific address

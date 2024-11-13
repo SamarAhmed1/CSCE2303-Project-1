@@ -1,4 +1,4 @@
-// Project 1 R and U.cpp : This file contains the 'main' function. Program execution begins and ends there.
+// Project 1 R and U.cpp : This file contains the 'main' function.Program execution begins and ends there.
 //
 #include <iostream>
 #include <utility>
@@ -18,11 +18,11 @@ Memory memory;
 vector <string> RInstructions = { "ADD", "SUB", "SLL", "SLT", "SLTU", "XOR", "SRL", "SRA", "OR", "AND" };
 vector <string> BInstructions = { "BEQ", "BNE", "BLT", "BGE", "BLTU", "BLGEU" };
 vector <string> SInstructions = { "SW", "SH", "SB" };
-vector <string> IInstructions = { "LB", "LH", "LW", "LBU", "LHU", "ADDI", "SLTI", "SLTU", "XORI", "ORI","ANDI", "SLLI", "SRLI", "SRAI" };
-vector <string> JInstructions = { "JAL" };
+vector <string> IInstructions = { "LB", "LH", "LW", "LBU", "LHU", "ADDI", "SLTI", "SLTU", "XORI", "ORI","ANDI", "SLLI", "SRLI", "SRAI", "JALR"};
+vector <string> JInstructions = { "JAL"};
 vector <string> UInstructions = { "LUI", "AUIPC" };
 vector <string> haltInstructions = { "ECALL", "EBREAK", "PAUSE", "FENCE", "FENCE.TSO" };
-vector <int> registers(32, 0);
+vector <int> registers(32, 0);               
 
 int programCounter = 0;
 int startAddress = 0;
@@ -91,6 +91,45 @@ int extractRegisterNumber(const string& regName) {
 	return stoi(numStr); // Convert the numeric part to an integer
 }
 
+string DecToBinary(int Dec)
+
+{
+	string Binary_String = "";
+	if (Dec == 0)
+		return "0";
+	while (Dec > 0)
+	{
+		Binary_String = to_string(Dec % 2) + Binary_String;
+		Dec = Dec / 2;
+	}
+	return Binary_String;
+}
+
+string DecToHex(int Dec)
+
+{
+	string Hex_Str = "";
+	int HexValue = 0;
+	int HexLength = 0;
+	while (Dec > 0) {
+		HexValue = Dec % 16;
+		if (HexValue < 10) {
+			Hex_Str = to_string(HexValue) + Hex_Str;
+		}
+		else
+		{
+			Hex_Str = char(HexValue - 10 + 'A') + Hex_Str;
+		}
+		Dec /= 16;
+		HexLength++;
+	}
+	if (HexLength < 1)
+	{
+		Hex_Str = "0" + Hex_Str;
+	}
+	return Hex_Str;
+}
+
 void ProcessJformat(Jformat& instruction) {
 	int valu = instruction.imm;
 	int returnAddress = programCounter + 4;
@@ -102,9 +141,8 @@ void ProcessJformat(Jformat& instruction) {
 
 	int registerNumber = extractRegisterNumber(instruction.rd.first);
 	registers[registerNumber] = instruction.rd.second;
-	for (int i = 0; i < registers.size(); i++) {
-		cout << "x" << i << " = " << registers[i] << endl;
-	}
+	cout << "Register " << instruction.rd.first << " updated to " << instruction.rd.second  << " after instruction " << instruction.name << endl;
+	cout << "The value stored inside the register is  " << DecToBinary(instruction.rd.second) << " in binary and " << DecToHex(instruction.rd.second) << " in hexadecimal" << endl;
 	programCounter += valu;
 	updateProgramCounter();
 }
@@ -165,9 +203,8 @@ void processRFormat(RFormat& instruction) {
 	int registerNumber = extractRegisterNumber(instruction.rd.first);
 	registers[registerNumber] = instruction.rd.second;
 	//cout << registers[registerNumber] << endl;
-	for (int i = 0; i < registers.size(); i++) {
-		cout << "x" << i << " = " << registers[i] << endl;
-	}
+	cout << "Register " << instruction.rd.first << " updated to " << instruction.rd.second  << " after instruction " << instruction.name << endl;
+	cout << "The value stored inside the register is  " << DecToBinary(instruction.rd.second) << " in binary and " << DecToHex(instruction.rd.second) << " in hexadecimal" << endl;
 	updateProgramCounter();
 }
 
@@ -176,14 +213,13 @@ void processUFormat(UFormat& instruction) {
 		instruction.rd.second = instruction.imm * pow(2, 16);
 	}
 
-	/*else if (instruction.name == "AUIPC") {
-
-	}*/
+	else if (instruction.name == "AUIPC") {
+		instruction.rd.second = programCounter + instruction.imm * pow(2, 12);
+	}
 	int registerNumber = extractRegisterNumber(instruction.rd.first);
 	registers[registerNumber] = instruction.rd.second;
-	for (int i = 0; i < registers.size(); i++) {
-		cout << "x" << i << " = " << registers[i] << endl;
-	}
+	cout << "Register " << instruction.rd.first << " updated to " << instruction.rd.second  << " after instruction " << instruction.name << endl;
+	cout << "The value stored inside the register is  " << DecToBinary(instruction.rd.second) << " in binary and " << DecToHex(instruction.rd.second) << " in hexadecimal" << endl;
 	updateProgramCounter();
 }
 void ProcessBFormat(BFormat& value, int& counter) {
@@ -244,9 +280,10 @@ void ProcessBFormat(BFormat& value, int& counter) {
 	}
 	if (Statement == true) {
 		if (labels.find(value.imm) != labels.end()) {
-			int offset = labels[value.imm] - programCounter;
-			programCounter += offset;
-			counter = labels[value.imm];
+			int offset = (labels[value.imm] / 4);
+
+			programCounter = labels[value.imm];
+			counter = offset;
 			cout << "Branch taken to label: " << value.imm << " at line " << counter << endl;
 			cout << "Branch taken, programCounter set to: " << programCounter << endl;
 		}
@@ -261,7 +298,7 @@ void ProcessBFormat(BFormat& value, int& counter) {
 }
 
 void ProcessSFormat(SFormat& value) {
-//	int baseAddr = registers[extractRegisterNumber(value.rs1.second)];
+	//	int baseAddr = registers[extractRegisterNumber(value.rs1.second)];
 	int address = value.imm + value.rs1.second;  // Adjusted for 4-byte addressing
 	cout << "rs2 at process is " << value.rs2.second << endl;
 	//memory[address + 1] = (x2 >> 8) & 0xFF; // Store upper byte
@@ -270,15 +307,14 @@ void ProcessSFormat(SFormat& value) {
 		//value.rs2.first = value.rs1.first;
 		//value.rs2.second = value.rs1.second;
 		//updateMemoryAndDisplay(address, 0); // Byte
-		memory.store(address, value.rs2.second & 0xFF);
-	
+		memory.store(address, value.rs2.second);
 	}
 	else if (value.opcode == "SH") {
 		//	memory.store(address, value.rs2.first & 0xFFFF);
 		//value.rs2.first = value.rs1.first;
 		//value.rs2.second = value.rs1.second;
 		//updateMemoryAndDisplay(address, 0); // Halfword
-		memory.store(address, value.rs2.second & 0xFFFF);
+		memory.store(address, value.rs2.second);
 	}
 	else if (value.opcode == "SW") {
 		//	memory.store(address, value.rs2.first);
@@ -297,7 +333,7 @@ void ProcessSFormat(SFormat& value) {
 
 void ProcessIformat(Iformat& instruction) {
 	int address = instruction.imm + instruction.rs1.second;
-
+	int returnAddress = programCounter + 4;
 	if (instruction.name == "LB") {
 		instruction.rd.second = memory.load(address) & 0xFF;
 	}
@@ -346,6 +382,15 @@ void ProcessIformat(Iformat& instruction) {
 	else if (instruction.name == "SRAI") {
 		instruction.rd.second = instruction.rs1.second >> instruction.imm;
 	}
+	else if (instruction.name == "JALR") {
+		 // assuming `rs1` is defined in `Jformat`
+		int target = (instruction.rs1.second + instruction.imm); // align the address to even boundary
+		instruction.rd.second = returnAddress;
+		cout << "JALR: Setting return address " << instruction.rd.second
+			<< ", jumping to address " << target << endl;
+		programCounter = target;
+	}
+
 	else {
 		cout << "Unknown I-format opcode: " << instruction.name << endl;
 	}
@@ -353,6 +398,8 @@ void ProcessIformat(Iformat& instruction) {
 	int registerNumber = extractRegisterNumber(instruction.rd.first);
 	if (registerNumber >= 0 && registerNumber < registers.size()) {
 		registers[registerNumber] = instruction.rd.second;
+		cout << "Register " << instruction.rd.first << " updated to " << instruction.rd.second  << " after instruction " << instruction.name << endl;
+		cout << "The value stored inside the register is  " << DecToBinary(instruction.rd.second) << " in binary and " << DecToHex(instruction.rd.second) << " in hexadecimal" << endl;
 	}
 	else {
 		cout << "Error: Invalid register index " << registerNumber << endl;
@@ -389,8 +436,7 @@ void readIformat(const string& line)
 		imm = temp;
 
 	}
-		int immm = stoi(imm);
-	
+	int immm = stoi(imm);
 	I.name = instructionName;
 	I.rd.first = rd;
 	I.rd.second = registers[extractRegisterNumber(rd)];
@@ -533,11 +579,13 @@ void readAndProcessAssemblyFile(const string& filename) {
 			// Only add the label if it hasn't been added before
 			if (labels.find(label) == labels.end()) {
 				counter++;
-				labels[label] = counter; // Store the label with its line number
+				programCounter += 4;
+				labels[label] = programCounter; // Store the label with its line number
 			}
 		}
 		else {
 			counter++; // Count non-label lines for instruction counting
+			programCounter += 4;
 
 		}
 		lines.push_back(line);
@@ -550,16 +598,19 @@ void readAndProcessAssemblyFile(const string& filename) {
 	// Reset file and counter for the second pass
 	file.clear();       // Clear EOF flag
 	file.seekg(0);      // Move back to the start of the file
-	counter = 0;
-	while (counter < lines.size()) {
+	counter = 1;
+	programCounter = 0;
+	int ProgramLineSize = lines.size() * 4;
+	cout << ProgramLineSize << endl;
+	while (programCounter < ProgramLineSize) {
 		//cout << "Entered second loop " << endl;
-		line = lines[counter];
+		line = lines[counter - 1];
 		istringstream iss(line);
 		string firstWord;
 
 		// Skip empty lines
 		if (!(iss >> firstWord)) {
-			//counter++;
+			counter++;
 			continue;
 		}
 
@@ -567,6 +618,7 @@ void readAndProcessAssemblyFile(const string& filename) {
 		if (labels.find(firstWord.substr(0, firstWord.size() - 1)) != labels.end()) {
 			//	cout << "First word " << firstWord.substr(0, firstWord.size() - 1) << endl;
 			counter++;
+			programCounter += 4;
 			continue;
 		}
 
@@ -644,6 +696,7 @@ void readAndProcessAssemblyFile(const string& filename) {
 			if (firstWord == haltInstructions[i]) {
 				cout << "Program stopped at a halt instruction: " << firstWord << endl;
 				counter++;
+				programCounter += 4;
 				file.close();
 				return;
 			}
@@ -652,6 +705,8 @@ void readAndProcessAssemblyFile(const string& filename) {
 	}
 	file.close();
 }
+
+
 
 int main()
 {
