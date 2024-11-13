@@ -404,8 +404,8 @@ void ProcessIformat(Iformat& instruction) {
 	else {
 		cout << "Error: Invalid register index " << registerNumber << endl;
 	}
-
-	updateProgramCounter();
+	if(instruction.name!="JALR")
+		updateProgramCounter();
 }
 
 void readIformat(const string& line)
@@ -416,7 +416,7 @@ void readIformat(const string& line)
 	string instructionName, rd, rs1, imm;
 
 	getline(ss, instructionName, ' ');
-	if (instructionName == "LW" || instructionName == "LB" || instructionName == "LH" || instructionName == "LBU" || instructionName == "LHU")
+	if (instructionName == "LW" || instructionName == "LB" || instructionName == "LH" || instructionName == "LBU" || instructionName == "LHU" || instructionName=="JALR")
 	{
 		getline(ss, temp, ',');
 		rd = temp;
@@ -720,7 +720,7 @@ int main()
 
 	cout << "Please enter your Name ";
 	cin >> name;
-	cout << "Hello" << " " << name << " " << "Welcome to Risk - V Assambler" << endl;
+	cout << "Hello" << " " << name << " " << "Welcome to Risk - V Assembler" << endl;
 	cout << "Enter the number of addresses you wish to initialize" << endl;
 	cin >> num;
 	for (int i = 0; i < num; i++) {
@@ -733,7 +733,7 @@ int main()
 		cout << "Memory  Address " << memoryAddress << endl;
 		//registers[extractRegisterNumber(RegisterN)] = RegisterValue;
 	}
-	readAndProcessAssemblyFile("Bonus_Case2.txt");
+	readAndProcessAssemblyFile("Assembly_Test.txt");
 	cout << "The final Register: " << endl;
 	for (int i = 0; i < registers.size(); i++) {
 		cout << "x" << i << " = " << registers[i] << endl;
