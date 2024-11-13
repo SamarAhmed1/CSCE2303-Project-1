@@ -16,8 +16,9 @@ int Memory::load(int address) {
     }
 }
 void Memory:: displayMemory() const {
-   cout << "Memory Contents:" << endl;
+    cout << "\n=== Final Memory State ===" << endl;
     for (const auto& entry : memoryMap) {
-      cout << "Address 0x" << std::hex << entry.first << ": " << dec << entry.second << endl;
+        cout << "Address: " << entry.first << " | Value: " << entry.second << endl;
     }
+    cout << "==========================" << endl;
 }
