@@ -1,3 +1,5 @@
+// Project 1 R and U.cpp : This file contains the 'main' function. Program execution begins and ends there.
+//
 #include <iostream>
 #include <utility>
 #include <string>
@@ -7,21 +9,31 @@
 #include <sstream>
 #include <map>
 #include <utility>
+#include "Memory.cpp"
 using namespace std;
 
-//vector<string> labels;
+
 map<string, int> labels;
-map<int, int> memory;
+Memory memory;
 vector <string> RInstructions = { "ADD", "SUB", "SLL", "SLT", "SLTU", "XOR", "SRL", "SRA", "OR", "AND" };
 vector <string> BInstructions = { "BEQ", "BNE", "BLT", "BGE", "BLTU", "BLGEU" };
 vector <string> SInstructions = { "SW", "SH", "SB" };
-vector <string> IInstructions = { "LB", "LH", "LW", "LBU", "LHU", "ADDI", "SLTI", "SLTU", "XORI", "ORI","ANDI", "SLLI", "SRLI", "SRAI"};
+vector <string> IInstructions = { "LB", "LH", "LW", "LBU", "LHU", "ADDI", "SLTI", "SLTU", "XORI", "ORI","ANDI", "SLLI", "SRLI", "SRAI" };
 vector <string> JInstructions = { "JAL" };
 vector <string> UInstructions = { "LUI", "AUIPC" };
-vector <string> haltInstructions = {"ECALL", "EBREAK", "PAUSE", "FENCE", "FENCE.TSO"};
+vector <string> haltInstructions = { "ECALL", "EBREAK", "PAUSE", "FENCE", "FENCE.TSO" };
 vector <int> registers(32, 0);
 
-struct SFormat {
+int programCounter = 0;
+int startAddress = 0;
+
+void updateProgramCounter() {
+	programCounter += 4;
+	cout << "Program Counter: " << programCounter << endl;
+}
+
+struct SFormat
+{
 	string opcode;
 	int imm;
 	pair <string, int> rs1;
@@ -68,23 +80,24 @@ struct Iformat
 	pair <string, int> rd;
 };
 
+void updateMemoryAndDisplay(int offset, int value) {
+	//int address = startAddress + offset;
+	memory.store(offset, value);
+	cout << "Memory Updated -> Address: " << offset << " | Value: " << value << endl;
+}
 
 int extractRegisterNumber(const string& regName) {
 	string numStr = regName.substr(1); // Extract the numeric part after 'x'
 	return stoi(numStr); // Convert the numeric part to an integer
 }
 
-void ProcessJformat(Jformat& instruction)
-
-{
-	int valu=0; 
-	if (instruction.name == "JAL")
-	{
-		instruction.rd.second = valu + 4;
-		valu = valu + instruction.imm;
-		cout << "JALR:" << instruction.rd.second << "   " << valu << endl;
-
-
+void ProcessJformat(Jformat& instruction) {
+	int valu = instruction.imm;
+	int returnAddress = programCounter + 4;
+	if (instruction.name == "JAL") {
+		instruction.rd.second = valu;
+		//valu = valu + instruction.imm;
+		cout << "JAL:" << instruction.rd.second << "jumping to adress   " << programCounter << endl;
 	}
 
 	int registerNumber = extractRegisterNumber(instruction.rd.first);
@@ -92,16 +105,17 @@ void ProcessJformat(Jformat& instruction)
 	for (int i = 0; i < registers.size(); i++) {
 		cout << "x" << i << " = " << registers[i] << endl;
 	}
+	programCounter += valu;
+	updateProgramCounter();
 }
 
 
 void processRFormat(RFormat& instruction) {
-	cout << "In process R" << endl;
+	//cout << "In process R" << endl;
 	if (instruction.name == "ADD") {
-		cout << "In ADD" << endl;
-		cout << instruction.rs1.second << " " << instruction.rs2.second;
+		//	cout << "In ADD" << endl;
+		//	cout << instruction.rs1.second << " " << instruction.rs2.second << " " << endl;
 		instruction.rd.second = instruction.rs1.second + instruction.rs2.second;
-		
 	}
 
 	else if (instruction.name == "SUB") {
@@ -150,10 +164,11 @@ void processRFormat(RFormat& instruction) {
 
 	int registerNumber = extractRegisterNumber(instruction.rd.first);
 	registers[registerNumber] = instruction.rd.second;
-	cout << registers[registerNumber] << endl;
+	//cout << registers[registerNumber] << endl;
 	for (int i = 0; i < registers.size(); i++) {
 		cout << "x" << i << " = " << registers[i] << endl;
 	}
+	updateProgramCounter();
 }
 
 void processUFormat(UFormat& instruction) {
@@ -169,95 +184,138 @@ void processUFormat(UFormat& instruction) {
 	for (int i = 0; i < registers.size(); i++) {
 		cout << "x" << i << " = " << registers[i] << endl;
 	}
+	updateProgramCounter();
 }
 void ProcessBFormat(BFormat& value, int& counter) {
 	bool Statement = false;
 
 	// Extract integer values for comparison
-	int rs1_value = value.rs1.second;
-	int rs2_value = value.rs2.second;
+	int rs1_value = registers[extractRegisterNumber(value.rs1.first)];
+	int rs2_value = registers[extractRegisterNumber(value.rs2.first)];
 
 	// Check branch conditions based on the opcode
 	if (value.opcode == "BEQ") {
-		Statement = (rs1_value == rs2_value);
+		if (rs1_value == rs2_value) {
+			Statement = true;
+		}
+		else {
+			Statement = false;
+		}
 	}
 	else if (value.opcode == "BNE") {
-		Statement = (rs1_value != rs2_value);
+		if (rs1_value != rs2_value) {
+			Statement = true;
+		}
+		else {
+			Statement = false;
+		}
 	}
 	else if (value.opcode == "BLT") {
-		Statement = (rs1_value < rs2_value);
+		if (rs1_value < rs2_value) {
+			Statement = true;
+		}
+		else {
+			Statement = false;
+		}
 	}
 	else if (value.opcode == "BGE") {
-		Statement = (rs1_value >= rs2_value);
+		if (rs1_value >= rs2_value) {
+			Statement = true;
+		}
+		else {
+			Statement = false;
+		}
 	}
 	else if (value.opcode == "BLTU") {
-		Statement = (static_cast<unsigned>(rs1_value) < static_cast<unsigned>(rs2_value));
+		if (static_cast<unsigned>(rs1_value) < static_cast<unsigned>(rs2_value)) {
+			Statement = true;
+		}
+		else {
+			Statement = false;
+		}
 	}
 	else if (value.opcode == "BGEU") {
-		Statement = (static_cast<unsigned>(rs1_value) >= static_cast<unsigned>(rs2_value));
+		if (static_cast<unsigned>(rs1_value) >= static_cast<unsigned>(rs2_value)) {
+			Statement = true;
+		}
+		else {
+			Statement = false;
+		}
 	}
-	if (Statement) {
+	if (Statement == true) {
 		if (labels.find(value.imm) != labels.end()) {
+			int offset = labels[value.imm] - programCounter;
+			programCounter += offset;
 			counter = labels[value.imm];
 			cout << "Branch taken to label: " << value.imm << " at line " << counter << endl;
+			cout << "Branch taken, programCounter set to: " << programCounter << endl;
 		}
 		else {
 			cout << "Label not found: " << value.imm << endl;
-			// Handle the situation gracefully, maybe continue execution or terminate gracefully
 		}
 	}
 	else {
+		updateProgramCounter();
 		cout << "Branch not taken, continuing to next instruction." << endl;
 	}
 }
 
 void ProcessSFormat(SFormat& value) {
-	// Calculate the effective address by adding immediate to rs1
-	int address = registers[extractRegisterNumber(value.rs1.first)] + value.imm;
-
-	// Perform the appropriate store operation based on the opcode
+//	int baseAddr = registers[extractRegisterNumber(value.rs1.second)];
+	int address = value.imm + value.rs1.second;  // Adjusted for 4-byte addressing
+	cout << "rs2 at process is " << value.rs2.second << endl;
+	//memory[address + 1] = (x2 >> 8) & 0xFF; // Store upper byte
 	if (value.opcode == "SB") {
-		memory[address] = value.rs2.second & 0xFF;  // Store only the least significant byte
-		cout << "Stored Byte at address " << address << " with value " << (value.rs2.second & 0xFF) << endl;
+		//	memory.store(address, value.rs2.first & 0xFF);
+		//value.rs2.first = value.rs1.first;
+		//value.rs2.second = value.rs1.second;
+		//updateMemoryAndDisplay(address, 0); // Byte
+		memory.store(address, value.rs2.second & 0xFF);
+	
 	}
 	else if (value.opcode == "SH") {
-		memory[address] = value.rs2.second & 0xFFFF;  // Store the least significant 2 bytes
-		cout << "Stored Halfword at address " << address << " with value " << (value.rs2.second & 0xFFFF) << endl;
+		//	memory.store(address, value.rs2.first & 0xFFFF);
+		//value.rs2.first = value.rs1.first;
+		//value.rs2.second = value.rs1.second;
+		//updateMemoryAndDisplay(address, 0); // Halfword
+		memory.store(address, value.rs2.second & 0xFFFF);
 	}
 	else if (value.opcode == "SW") {
-		memory[address] = value.rs2.second;  // Store the full 4-byte word
-		cout << "Stored Word at address " << address << " with value " << value.rs2.second << endl;
+		//	memory.store(address, value.rs2.first);
+		//value.rs2.first = value.rs1.first;
+		//value.rs2.second = value.rs1.second;
+		//updateMemoryAndDisplay(address, 0); // Word
+		memory.store(address, value.rs2.second);
 	}
 	else {
 		cout << "Unknown S-format opcode: " << value.opcode << endl;
 	}
+	updateProgramCounter();
+
 }
 
+
 void ProcessIformat(Iformat& instruction) {
-	int address = 0;
+	int address = instruction.imm + instruction.rs1.second;
+
 	if (instruction.name == "LB") {
-		address = instruction.rs1.second + instruction.imm;
-		instruction.rd.second = static_cast<int8_t>(memory[address]);
-		cout << "LB:" << instruction.rs1.second + instruction.imm << " = " << instruction.rd.second << endl;
+		instruction.rd.second = memory.load(address) & 0xFF;
 	}
 	else if (instruction.name == "LH") {
-		address = instruction.rs1.second + instruction.imm;
-		instruction.rd.second = static_cast<int16_t>(memory[address]);
-		cout << "LH " << instruction.rs1.second + instruction.imm << " = " << instruction.rd.second << endl;
+		instruction.rd.second = memory.load(address) & 0xFFFF;
 	}
 	else if (instruction.name == "LW") {
-		address = instruction.rs1.second + instruction.imm;
-		instruction.rd.second = memory[address];
-		cout << "LW:" << instruction.rs1.second + instruction.imm << " = " << instruction.rd.second << endl;
+		cout << "In LW" << endl;
+		instruction.rd.second = memory.load(address);
 	}
 	else if (instruction.name == "LBU") {
 		address = instruction.rs1.second + instruction.imm;
-		instruction.rd.second = memory[address] & 0xFF;
+		instruction.rd.second = memory.load(address) & 0xFF;
 		cout << "LBU: " << instruction.rs1.second + instruction.imm << " = " << instruction.rd.second << endl;
 	}
 	else if (instruction.name == "LHU") {
 		address = instruction.rs1.second + instruction.imm;
-		instruction.rd.second = memory[address] & 0xFFFF;
+		instruction.rd.second = memory.load(address) & 0xFFFF;
 		cout << "LHU: " << instruction.rs1.second + instruction.imm << " = " << instruction.rd.second << endl;
 	}
 	else if (instruction.name == "ADDI") {
@@ -266,90 +324,102 @@ void ProcessIformat(Iformat& instruction) {
 	}
 	else if (instruction.name == "SLTI") {
 		instruction.rd.second = instruction.rs1.second < instruction.imm ? 1 : 0;
-		cout << "SLTI: " << instruction.rs1.second << " < " << instruction.imm << " = " << instruction.rd.second << endl;
 	}
 	else if (instruction.name == "SLTU") {
 		instruction.rd.second = static_cast<unsigned int>(instruction.rs1.second) < static_cast<unsigned int>(instruction.imm) ? 1 : 0;
-		cout << "SLTIU: " << instruction.rs1.second << " < " << instruction.imm << " = " << instruction.rd.second << endl;
 	}
 	else if (instruction.name == "XORI") {
 		instruction.rd.second = instruction.rs1.second ^ instruction.imm;
-		cout << "XORI: " << instruction.rs1.second << " ^ " << instruction.imm << " = " << instruction.rd.second << endl;
 	}
 	else if (instruction.name == "ORI") {
 		instruction.rd.second = instruction.rs1.second | instruction.imm;
-		cout << "ORI: " << instruction.rs1.second << " | " << instruction.imm << " = " << instruction.rd.second << endl;
 	}
 	else if (instruction.name == "ANDI") {
 		instruction.rd.second = instruction.rs1.second & instruction.imm;
-		cout << "ANDI: " << instruction.rs1.second << " & " << instruction.imm << " = " << instruction.rd.second << endl;
 	}
 	else if (instruction.name == "SLLI") {
-		instruction.rd.second = instruction.rs1.second * pow(2, instruction.imm);
+		instruction.rd.second = instruction.rs1.second << instruction.imm;
 	}
 	else if (instruction.name == "SRLI") {
-		if (instruction.rs1.second < 0)
-			instruction.rs1.second = abs(instruction.rs1.second);
-		if (instruction.imm < 0)
-			instruction.imm = abs(instruction.imm);
-		instruction.rd.second = instruction.rs1.second / pow(2, instruction.imm);
+		instruction.rd.second = static_cast<unsigned int>(instruction.rs1.second) >> instruction.imm;
 	}
 	else if (instruction.name == "SRAI") {
-		instruction.rd.second = instruction.rs1.second / pow(2, instruction.imm);
+		instruction.rd.second = instruction.rs1.second >> instruction.imm;
 	}
 	else {
 		cout << "Unknown I-format opcode: " << instruction.name << endl;
 	}
+
 	int registerNumber = extractRegisterNumber(instruction.rd.first);
-	registers[registerNumber] = instruction.rd.second;
-	for (int i = 0; i < registers.size(); i++) {
-		cout << "x" << i << " = " << registers[i] << endl;
+	if (registerNumber >= 0 && registerNumber < registers.size()) {
+		registers[registerNumber] = instruction.rd.second;
 	}
+	else {
+		cout << "Error: Invalid register index " << registerNumber << endl;
+	}
+
+	updateProgramCounter();
 }
 
 void readIformat(const string& line)
 {
 	Iformat I;
-	istringstream iss(line);
-	string instructionName, rd, rs1;
-	char comma;
-	int imm;
+	stringstream ss(line);
+	string temp;
+	string instructionName, rd, rs1, imm;
 
-	iss >> instructionName >> rd >> comma >> rs1 >> comma >> imm;
-
-	if (iss.fail())
+	getline(ss, instructionName, ' ');
+	if (instructionName == "LW" || instructionName == "LB" || instructionName == "LH" || instructionName == "LBU" || instructionName == "LHU")
 	{
-		cout << "Error parsing the instruction: " << line << endl;
-		return;
+		getline(ss, temp, ',');
+		rd = temp;
+		getline(ss, temp, '(');
+		imm = temp;
+		getline(ss, temp, ')');
+		rs1 = temp;
 	}
+	else {
+		getline(ss, temp, ',');
+		rd = temp;
+		getline(ss, temp, ' ');
+		getline(ss, temp, ',');
+		rs1 = temp;
+		getline(ss, temp, ' ');
+		getline(ss, temp, ' ');
+		imm = temp;
 
+	}
+		int immm = stoi(imm);
+	
 	I.name = instructionName;
 	I.rd.first = rd;
+	I.rd.second = registers[extractRegisterNumber(rd)];
 	I.rs1.first = rs1;
 	I.rs1.second = registers[extractRegisterNumber(rs1)];
-	I.imm = imm;
+	I.imm = immm;
 	ProcessIformat(I);
 }
 
 void readJFormat(const string& line)
 {
 	Jformat J;
-	istringstream iss(line);
-	string instructionName, rd;
-	char comma;
-	int imm;
+	stringstream ss(line);
+	string instructionName, rd, imm1;
 
-	iss >> instructionName >> rd >> comma >> imm;
+	getline(ss, instructionName, ' ');
+	getline(ss, rd, ',');
+	getline(ss, imm1, ' ');
 
-	if (iss.fail())
+	if (!imm1.empty() && imm1.back() == ':')
 	{
-		cout << "Error parsing the instruction: " << line << endl;
-		return;
+		imm1 = imm1.substr(0, imm1.size() - 1);
 	}
+
 
 	J.name = instructionName;
 	J.rd.first = rd;
-	J.imm = imm;
+	J.rd.second = registers[extractRegisterNumber(rd)];
+	J.imm = stoi(imm1);
 
 	ProcessJformat(J);
 }
@@ -380,6 +450,7 @@ void readRFormat(const string& line) {
 	processRFormat(R);
 }
 
+
 void readSFormat(const string& line) {
 	SFormat S;
 	string instructionName, rs1, rs2;
@@ -392,13 +463,15 @@ void readSFormat(const string& line) {
 	rs2 = temp;
 	getline(ss, temp, '(');
 	imm = stoi(temp);
-	getline(ss, rs1, ')');
+	getline(ss, temp, ')');
+	rs1 = temp;
 	S.opcode = instructionName;
 	S.imm = imm;
 	S.rs1.first = rs1;
 	S.rs1.second = registers[extractRegisterNumber(rs1)];
 	S.rs2.first = rs2;
 	S.rs2.second = registers[extractRegisterNumber(rs2)];
+	cout << "Value of rs2 at store is" << S.rs2.second << endl;
 	ProcessSFormat(S);
 
 }
@@ -439,47 +512,61 @@ void readAndProcessAssemblyFile(const string& filename) {
 		return;
 	}
 
+	vector<string> lines;
 	string line;
 	int counter = 0;
 	// First pass: collect label positions
 	while (getline(file, line)) {
-		cout << "Entered loop " << endl;
 		istringstream iss(line);
 		string firstWord;
 
 		// Skip empty lines
 		if (!(iss >> firstWord)) {
+			lines.push_back("");
 			continue;
 		}
+
 
 		// Check if the line is a label (ends with ':')
 		if (firstWord.back() == ':') {
 			string label = firstWord.substr(0, firstWord.size() - 1);
-			labels[label] = counter; // Store the label with its line number
+			// Only add the label if it hasn't been added before
+			if (labels.find(label) == labels.end()) {
+				counter++;
+				labels[label] = counter; // Store the label with its line number
+			}
 		}
 		else {
 			counter++; // Count non-label lines for instruction counting
 
 		}
+		lines.push_back(line);
 	}
+	/*cout << "Labels map contents:" << endl;
+	for (const auto& label : labels) {
+		cout << "Label: " << label.first << ", Line: " << label.second << endl;
+	}*/
 
 	// Reset file and counter for the second pass
 	file.clear();       // Clear EOF flag
 	file.seekg(0);      // Move back to the start of the file
 	counter = 0;
-	while (getline(file, line)) {
-		cout << "Entered second loop " << endl;
-
+	while (counter < lines.size()) {
+		//cout << "Entered second loop " << endl;
+		line = lines[counter];
 		istringstream iss(line);
 		string firstWord;
 
 		// Skip empty lines
 		if (!(iss >> firstWord)) {
+			//counter++;
 			continue;
 		}
 
 		// Check if the line is a label, skip processing if true
 		if (labels.find(firstWord.substr(0, firstWord.size() - 1)) != labels.end()) {
+			//	cout << "First word " << firstWord.substr(0, firstWord.size() - 1) << endl;
+			counter++;
 			continue;
 		}
 
@@ -544,69 +631,62 @@ void readAndProcessAssemblyFile(const string& filename) {
 		// Check for B-type instructions
 		for (int i = 0; i < BInstructions.size(); i++) {
 			if (firstWord == BInstructions[i]) {
-				readBFormat(line, counter);  // counter passed by reference
+				readBFormat(line, counter);  // Counter updated by reference
 				instructionProcessed = true;
 				break;
 			}
 		}
-
+		if (instructionProcessed) {
+			counter++;
+			continue;
+		}
 		for (int i = 0; i < haltInstructions.size(); i++) {
 			if (firstWord == haltInstructions[i]) {
-				cout << "Program stopped at: " << firstWord;
+				cout << "Program stopped at a halt instruction: " << firstWord << endl;
+				counter++;
 				file.close();
 				return;
 			}
-		}
 
-		counter++; // Increment for each non-label, non-empty line
-	}
-	
-}
-
-
-
-/*	while (getline(file, line)) {
-		istringstream iss(line);
-		string firstWord;
-
-		if (iss >> firstWord) {
-			for (int i = 0; i < 10; i++) {
-				if (firstWord == RInstructions[i]) {
-					readRFormat(line);
-				}
-			}
-			for (int i = 0; i < 6; i++) {
-				if (firstWord == BInstructions[i]) {
-					readBFormat(line);
-				}
-				for (int i = 0; i < 3; i++) {
-					if (firstWord == SInstructions[i]) {
-						readSFormat(line);
-					}
-				}
-			}
 		}
 	}
+	file.close();
 }
-file.close();
-}*/
-
 
 int main()
 {
-	string RegisterN;
-	int RegisterValue;
+	//string RegisterN;
+	//int RegisterValue;
+	int memoryAddress;
+	int memoryValue;
+	string type;
 	int num;
-	cout << "Enter the number of registers you wish to initialize" << endl;
+	string name;
+
+	cout << "Please enter your Name ";
+	cin >> name;
+	cout << "Hello" << " " << name << " " << "Welcome to Risk - V Assambler" << endl;
+	cout << "Enter the number of addresses you wish to initialize" << endl;
 	cin >> num;
 	for (int i = 0; i < num; i++) {
-		cout << "Enter the desired name for the registers" << endl;
-		cin >> RegisterN;
+
+		cout << "Enter the desired address" << endl;
+		cin >> memoryAddress;
 		cout << "Enter its value" << endl;
-		cin >> RegisterValue;
-		registers[extractRegisterNumber(RegisterN)] = RegisterValue;
+		cin >> memoryValue;
+		memory.store(memoryAddress, memoryValue);
+		cout << "Memory  Address " << memoryAddress << endl;
+		//registers[extractRegisterNumber(RegisterN)] = RegisterValue;
 	}
-	readAndProcessAssemblyFile("Assembly_Test.txt");
-	
+	readAndProcessAssemblyFile("Bonus_Case2.txt");
+	cout << "The final Register: " << endl;
+	for (int i = 0; i < registers.size(); i++) {
+		cout << "x" << i << " = " << registers[i] << endl;
+	}
+
+	memory.displayMemory();
+	cout << "The final program counter is: " << programCounter << endl;
+
+	cout << "Thank you for using this Risc-V, assembly simulator!. " << endl;
 	return 0;
 }
